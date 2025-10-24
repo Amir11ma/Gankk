@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جوک تصادفی</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 2rem;
+        }
+        #jokeContainer {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            max-width: 600px;
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>جوک تصادفی</h1>
+    <div id="jokeContainer">در حال دریافت جوک...</div>
+
+    <script>
+        const jokeContainer = document.getElementById('jokeContainer');
+        
+        async function fetchJoke() {
+            try {
+                const response = await fetch('https://api.codebazan.ir/jok/');
+                
+                if (!response.ok) {
+                    throw new Error(`خطا در دریافت جوک: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // فرض بر این است که پاسخ به صورت متن ساده یا آبجکت JSON با کلید 'joke' برمی‌گردد
+                // ساختار دقیق پاسخ را باید از مستندات API یا بررسی خروجی بدست آورید
+                jokeContainer.textContent = data.result || data.joke || data; 
+                
+            } catch (error) {
+                console.error('Error:', error);
+                jokeContainer.textContent = 'متاسفانه در دریافت جوک خطایی رخ داده است.';
+            }
+        }
+
+        // دریافت اولیه جوک
+        fetchJoke();
+        
+        // تنظیم زمان‌بندی برای به‌روزرسانی هر ۵ ثانیه
+        setInterval(fetchJoke, 5000);
+    </script>
+</body>
+</html>
