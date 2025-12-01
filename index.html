@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>شاخص آلودگی هوا ایران (AQI) — وب اپ</title>
+
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1976d2" />
+
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#ffffff; --muted:#666;
+    --accent:#1976d2; --accent-contrast:#fff;
+  }
+  html,body{height:100%;margin:0;font-family: Vazirmatn, Tahoma, system-ui, sans-serif;
+    background:var(--bg); color:#111; -webkit-font-smoothing:antialiased;}
+  header{background:linear-gradient(90deg,#1976d2,#42a5f5); color:var(--accent-contrast);
+    padding:18px 16px; display:flex; gap:12px; align-items:center; justify-content:space-between;}
+  header h1{margin:0;font-size:18px;font-weight:700}
+  header .meta{font-size:13px; opacity:.95}
+  main{max-width:1100px;margin:18px auto;padding:12px;}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .btn{background:var(--accent); color:var(--accent-contrast); border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(0,0,0,.06)}
+  .search{flex:1;min-width:160px}
+  input[type="text"]{width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;font-size:14px}
+
+  /* card */
+  .card{background:var(--card);box-shadow:0 6px 18px rgba(20,20,20,.06);border-radius:10px;padding:12px}
+
+  /* table */
+  .table-wrap{overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead th{background:#0b63a4;color:#fff;padding:12px 10px;text-align:center;font-weight:600}
+  tbody td{padding:10px;border-bottom:1px solid #f1f1f1;text-align:center}
+  .small{font-size:12px;color:var(--muted)}
+  .emoji{font-size:18px}
+
+  /* responsive: mobile layout = cards */
+  @media (max-width:720px){
+    thead{display:none}
+    table, tbody, tr, td{display:block;width:100%}
+    tr{margin-bottom:12px;border-radius:8px;overflow:hidden;background:var(--card);box-shadow:0 4px 12px rgba(0,0,0,.03)}
+    td{padding:10px 12px;text-align:right}
+    td::before{content:attr(data-label);float:left;font-weight:600;color:var(--muted)}
+    .controls{gap:6px}
+  }
+
+  footer{max-width:1100px;margin:14px auto;color:var(--muted);font-size:13px;text-align:center;padding-bottom:20px}
+  .install-row{display:flex;gap:8px;align-items:center}
+  .install-prompt{background:#fff8e1;border:1px solid #ffecb3;padding:8px 10px;border-radius:8px;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🌍 شاخص آلودگی هوا ایران (AQI)</h1>
+    <div class="meta small">آپدیت خودکار: هر ۶۰ ثانیه — بدون نیاز به توکن</div>
+  </div>
+  <div class="install-row" id="installRow" style="display:none">
+    <div class="install-prompt">🔽 می‌توانید این وب‌اپ را نصب کنید (Add to home)</div>
+    <button class="btn" id="installBtn">نصب</button>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <div class="controls">
+      <div style="width:160px">
+        <button class="btn" id="showAll">نمایش همه</button>
+      </div>
+
+      <div style="width:170px">
+        <select id="refreshSelect" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;font-size:14px">
+          <option value="60">آپدیت: 60 ثانیه</option>
+          <option value="30">آپدیت: 30 ثانیه</option>
+          <option value="120">آپدیت: 120 ثانیه</option>
+        </select>
+      </div>
+
+      <div class="search" style="min-width:140px">
+        <input type="text" id="citySearch" placeholder="جستجوی شهر..." />
+      </div>
+
+      <div style="min-width:120px">
+        <button class="btn ghost" id="toggleSort">مرتب‌سازی: AQI ↑</button>
+      </div>
+
+      <div style="min-width:140px;text-align:left">
+        <div class="small">میانگین کشوری: <span id="avgVal">—</span></div>
+        <div class="small">آخرین بروزرسانی: <span id="lastUpdated">—</span></div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="aqiTable" class="card">
+        <thead>
+          <tr>
+            <th>شهر</th>
+            <th>AQI</th>
+            <th>وضعیت</th>
+            <th>تغییر</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- rows injected by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer>
+  ساخته شده با ❤️ — منبع داده: Open-Meteo (بدون توکن). قرار دادن در GitHub Pages امن است.
+</footer>
+
+<script>
+/* =======================
+   لیست شهرها (فارسی) — می‌توانید اضافه/کم کنید
+   شکل: "نام": [lat, lon]
+   ======================= */
+const cities = {
+  "تهران":[35.6892,51.3890],
+  "مشهد":[36.2605,59.6168],
+  "اصفهان":[32.6546,51.6680],
+  "شیراز":[29.5918,52.5837],
+  "تبریز":[38.0962,46.2738],
+  "کرج":[35.8400,51.0000],
+  "قم":[34.6401,50.8764],
+  "اهواز":[31.3183,48.6706],
+  "کرمان":[30.2839,57.0834],
+  "یزد":[31.8974,54.3569],
+  "کرمانشاه":[34.3142,47.0650],
+  "سمنان":[35.5753,53.3958],
+  "رشت":[37.2808,49.5832],
+  "ارومیه":[37.5483,45.0672],
+  "اردبیل":[38.2498,48.2933],
+  "زاهدان":[29.4963,60.8629],
+  "بندرعباس":[27.1865,56.2808],
+  "گرگان":[36.8427,54.4448],
+  "بوشهر":[28.9234,50.8203],
+  "خرم‌آباد":[33.4878,48.3550],
+  "همدان":[34.8090,48.5150],
+  "قزوین":[36.2688,50.0041],
+  "اراک":[34.0917,49.6892],
+  "زنجان":[36.6736,48.4787],
+  "سنندج":[35.3219,46.9862],
+  "ایلام":[33.6370,46.4227],
+  "بیرجند":[32.8649,59.2211],
+  "گرمسار":[35.2369,52.3096],
+  "نجف‌آباد":[32.6378,51.3536],
+  "شادگان":[30.5841,48.2716]
+};
+
+/* =========== تنظیمات اولیه =========== */
+let previous = {};         // ذخیره AQI قبلی برای اختلاف
+let refreshInterval = 60;  // ثانیه
+let sortAsc = true;        // مرتب‌سازی بر اساس AQI صعودی
+let updateTimer = null;
+const apiBase = "https://air-quality-api.open-meteo.com/v1/air-quality";
+
+/* ---------- helpers ---------- */
+function aqiEmoji(v){
+  if (v === null || v === undefined) return "❌";
+  if (v <= 50) return "🙂";
+  if (v <= 100) return "😐";
+  if (v <= 150) return "😷";
+  if (v <= 200) return "🤢";
+  if (v <= 300) return "☠️";
+  return "💀";
+}
+function safeNum(x){ return (x===null||x===undefined) ? null : Number(x); }
+
+/* ---------- fetch AQI for coordinate ---------- */
+async function fetchAQI(lat, lon){
+  const url = `${apiBase}?latitude=${lat}&longitude=${lon}&hourly=us_aqi`;
+  try{
+    const res = await fetch(url);
+    const j = await res.json();
+    // API returns hourly.us_aqi array; first element current hour
+    return j?.hourly?.us_aqi?.[0] ?? null;
+  }catch(e){
+    return null;
+  }
+}
+
+/* ---------- build & render table ---------- */
+async function updateAll(){
+  // stop any running timer while updating
+  if (updateTimer) { clearTimeout(updateTimer); updateTimer = null; }
+
+  const rows = [];
+  const keys = Object.keys(cities);
+
+  // fetch sequentially to avoid floods; could be parallel but simpler and safer
+  for (const name of keys){
+    const [lat, lon] = cities[name];
+    const aqi = await fetchAQI(lat, lon);
+    rows.push({name, aqi: safeNum(aqi)});
+  }
+
+  // remove nulls for average calc
+  const valid = rows.filter(r=>r.aqi!==null).map(r=>r.aqi);
+  const avg = valid.length ? (valid.reduce((a,b)=>a+b,0)/valid.length).toFixed(1) : "—";
+
+  document.getElementById("avgVal").innerText = avg;
+  document.getElementById("lastUpdated").innerText = new Date().toLocaleTimeString('fa-IR');
+
+  // sorting
+  rows.sort((a,b)=>{
+    const aa = a.aqi===null?Infinity:a.aqi;
+    const bb = b.aqi===null?Infinity:b.aqi;
+    return sortAsc ? aa-bb : bb-aa;
+  });
+
+  renderRows(rows);
+
+  // schedule next update
+  updateTimer = setTimeout(updateAll, refreshInterval*1000);
+}
+
+function renderRows(rows){
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
+  const q = document.getElementById("citySearch").value.trim();
+  const qLower = q ? q.toLowerCase() : "";
+
+  for (const r of rows){
+    if (qLower && !r.name.toLowerCase().includes(qLower)) continue;
+
+    const change = (r.aqi===null) ? "" : (()=> {
+      const prev = previous[r.name];
+      if (prev===undefined || prev===null) return "0";
+      const d = r.aqi - prev;
+      return (d>0?"+":"") + d;
+    })();
+
+    // update previous only after calculating change
+    previous[r.name] = r.aqi;
+
+    const tr = document.createElement("tr");
+
+    const tdName = document.createElement("td");
+    tdName.setAttribute("data-label","شهر");
+    tdName.innerText = r.name;
+
+    const tdAqi = document.createElement("td");
+    tdAqi.setAttribute("data-label","AQI");
+    tdAqi.innerText = r.aqi===null ? "نامعتبر" : r.aqi;
+
+    const tdEmoji = document.createElement("td");
+    tdEmoji.setAttribute("data-label","وضعیت");
+    tdEmoji.innerHTML = `<span class="emoji">${aqiEmoji(r.aqi)}</span>`;
+
+    const tdChange = document.createElement("td");
+    tdChange.setAttribute("data-label","تغییر");
+    tdChange.innerText = change;
+
+    tr.appendChild(tdName);
+    tr.appendChild(tdAqi);
+    tr.appendChild(tdEmoji);
+    tr.appendChild(tdChange);
+
+    tbody.appendChild(tr);
+  }
+}
+
+/* ========== UI bindings ========== */
+document.getElementById("citySearch").addEventListener("input", ()=> {
+  // re-render from last fetched data (we don't store full rows here, so simply call updateAll to refresh)
+  // but to avoid heavy API calls on typing, we can just re-render using previous values:
+  // build temporary rows from cities + previous
+  const tmp = Object.keys(cities).map(name=>({name, aqi: previous[name] ?? null}));
+  renderRows(tmp);
+});
+
+document.getElementById("toggleSort").addEventListener("click", (e)=>{
+  sortAsc = !sortAsc;
+  e.target.innerText = `مرتب‌سازی: AQI ${sortAsc ? '↑' : '↓'}`;
+  // re-render
+  const tmp = Object.keys(cities).map(name=>({name, aqi: previous[name] ?? null}));
+  renderRows(tmp);
+});
+
+document.getElementById("refreshSelect").addEventListener("change",(e)=>{
+  refreshInterval = Number(e.target.value);
+  if (updateTimer){ clearTimeout(updateTimer); updateTimer = null; }
+  updateAll();
+});
+
+document.getElementById("showAll").addEventListener("click", ()=>{
+  document.getElementById("citySearch").value = "";
+  const tmp = Object.keys(cities).map(name=>({name, aqi: previous[name] ?? null}));
+  renderRows(tmp);
+});
+
+/* ========== PWA install prompt handling ========== */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById("installRow").style.display = "flex";
+});
+
+document.getElementById("installBtn").addEventListener("click", async ()=>{
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById("installRow").style.display = "none";
+});
+
+/* ========== service worker registration ========== */
+if ('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=> {
+    console.log('Service worker registered');
+  }).catch(()=>console.warn('SW register failed'));
+}
+
+/* ========== start ========== */
+updateAll();
+
+</script>
+</body>
+</html>
