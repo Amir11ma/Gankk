@@ -3,123 +3,162 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>شاخص آلودگی هوا ایران (AQI) — وب اپ</title>
+<title>شاخص آلودگی هوا — اپلیکیشن</title>
 
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#1976d2" />
 
+<!-- Vazirmatn CDN (فونت فارسی A) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.min.css">
+
 <style>
   :root{
-    --bg:#f5f7fb; --card:#ffffff; --muted:#666;
-    --accent:#1976d2; --accent-contrast:#fff;
+    --bg: #f4f8fc;
+    --card: #ffffff;
+    --muted:#6b7785;
+    --accent:#1976d2;
+    --accent-600:#0f5fb0;
+    --danger:#d32f2f;
+    --radius:14px;
   }
-  html,body{height:100%;margin:0;font-family: Vazirmatn, Tahoma, system-ui, sans-serif;
-    background:var(--bg); color:#111; -webkit-font-smoothing:antialiased;}
-  header{background:linear-gradient(90deg,#1976d2,#42a5f5); color:var(--accent-contrast);
-    padding:18px 16px; display:flex; gap:12px; align-items:center; justify-content:space-between;}
-  header h1{margin:0;font-size:18px;font-weight:700}
-  header .meta{font-size:13px; opacity:.95}
-  main{max-width:1100px;margin:18px auto;padding:12px;}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
-  .btn{background:var(--accent); color:var(--accent-contrast); border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
-  .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(0,0,0,.06)}
-  .search{flex:1;min-width:160px}
-  input[type="text"]{width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;font-size:14px}
-
-  /* card */
-  .card{background:var(--card);box-shadow:0 6px 18px rgba(20,20,20,.06);border-radius:10px;padding:12px}
-
-  /* table */
-  .table-wrap{overflow:auto}
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  thead th{background:#0b63a4;color:#fff;padding:12px 10px;text-align:center;font-weight:600}
-  tbody td{padding:10px;border-bottom:1px solid #f1f1f1;text-align:center}
-  .small{font-size:12px;color:var(--muted)}
-  .emoji{font-size:18px}
-
-  /* responsive: mobile layout = cards */
-  @media (max-width:720px){
-    thead{display:none}
-    table, tbody, tr, td{display:block;width:100%}
-    tr{margin-bottom:12px;border-radius:8px;overflow:hidden;background:var(--card);box-shadow:0 4px 12px rgba(0,0,0,.03)}
-    td{padding:10px 12px;text-align:right}
-    td::before{content:attr(data-label);float:left;font-weight:600;color:var(--muted)}
-    .controls{gap:6px}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family: Vazirmatn, "Tahoma", sans-serif;background:var(--bg);color:#0b1a2b;-webkit-font-smoothing:antialiased}
+  header{
+    background: linear-gradient(90deg,var(--accent),#42a5f5);
+    color:#fff;padding:18px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    box-shadow: 0 6px 20px rgba(25,118,210,.12);
+    position: sticky; top: 0; z-index: 40;
+  }
+  header .title{font-size:18px;font-weight:700;margin:0}
+  header .subtitle{font-size:13px;opacity:.95}
+  main{max-width:980px;margin:14px auto;padding:14px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .btn{
+    background:var(--accent);color:#fff;border:0;padding:9px 12px;border-radius:10px;font-weight:600;cursor:pointer;
+    box-shadow: 0 6px 14px rgba(25,118,210,.08);
+  }
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(11,26,43,.06);box-shadow:none}
+  .select, .search{
+    background:var(--card);border-radius:10px;padding:6px 8px;border:1px solid #e9eef6;min-width:120px;
+  }
+  .search input{border:0;outline:none;padding:8px;width:220px;background:transparent;font-size:14px}
+  .row{
+    display:grid;grid-template-columns:1fr 280px;gap:14px;
   }
 
-  footer{max-width:1100px;margin:14px auto;color:var(--muted);font-size:13px;text-align:center;padding-bottom:20px}
-  .install-row{display:flex;gap:8px;align-items:center}
-  .install-prompt{background:#fff8e1;border:1px solid #ffecb3;padding:8px 10px;border-radius:8px;font-size:13px}
+  /* card list */
+  .list{display:grid;gap:12px}
+  .card{
+    background:var(--card);border-radius:var(--radius);padding:12px;display:flex;align-items:center;gap:12px;
+    box-shadow: 0 6px 18px rgba(12,30,60,.04);
+  }
+  .card .left{flex:1}
+  .city{font-size:16px;font-weight:700;margin-bottom:4px}
+  .meta{font-size:13px;color:var(--muted)}
+  .aqi{
+    min-width:84px;text-align:center;border-radius:10px;padding:10px 8px;background:linear-gradient(180deg,#f6f8fb,#ffffff);
+    box-shadow: inset 0 -6px 18px rgba(0,0,0,.02);
+  }
+  .aqi .val{font-size:20px;font-weight:800}
+  .aqi .emoji{font-size:20px;margin-top:6px;display:block}
+
+  .change{font-size:13px;color:var(--muted);margin-top:6px}
+
+  /* right column (summary) */
+  .panel{
+    background:linear-gradient(180deg,#fff,#fbfdff);border-radius:12px;padding:12px;box-shadow:0 6px 20px rgba(20,30,60,.04);
+    height:100%;
+  }
+  .stat{display:flex;justify-content:space-between;align-items:center;padding:8px 6px}
+  .stat .label{color:var(--muted);font-size:13px}
+  .stat .value{font-weight:700;font-size:15px}
+
+  /* mobile: single column, cards full width */
+  @media (max-width:900px){
+    .row{grid-template-columns:1fr; }
+    .controls{justify-content:space-between}
+    .search input{width:140px}
+  }
+  @media (max-width:600px){
+    .search input{width:100px}
+    header .title{font-size:16px}
+    .aqi{min-width:72px;padding:8px}
+  }
+
+  /* empty / loading */
+  .loader{width:36px;height:36px;border-radius:50%;border:4px solid rgba(255,255,255,.16);border-top-color:rgba(255,255,255,.9);animation:spin 0.9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* nice scrollbar for desktop */
+  @media (hover:hover) {
+    .list{max-height:70vh;overflow:auto;padding-right:8px}
+    .list::-webkit-scrollbar{width:10px}
+    .list::-webkit-scrollbar-thumb{background:rgba(11,26,43,.06);border-radius:10px}
+  }
 </style>
 </head>
 <body>
 <header>
   <div>
-    <h1>🌍 شاخص آلودگی هوا ایران (AQI)</h1>
-    <div class="meta small">آپدیت خودکار: هر ۶۰ ثانیه — بدون نیاز به توکن</div>
+    <div class="title">🌍 شاخص آلودگی هوا ایران</div>
+    <div class="subtitle">آپدیت خودکار: هر <span id="uiInterval">60</span> ثانیه — منبع: Open-Meteo</div>
   </div>
-  <div class="install-row" id="installRow" style="display:none">
-    <div class="install-prompt">🔽 می‌توانید این وب‌اپ را نصب کنید (Add to home)</div>
+
+  <div id="installRow" style="display:none">
     <button class="btn" id="installBtn">نصب</button>
   </div>
 </header>
 
 <main>
-  <div class="card">
-    <div class="controls">
-      <div style="width:160px">
-        <button class="btn" id="showAll">نمایش همه</button>
+  <div class="row">
+    <div>
+      <div class="controls">
+        <div class="select">
+          <select id="refresh" style="border:0;background:transparent;font-weight:700">
+            <option value="60">آپدیت: 60 ثانیه</option>
+            <option value="30">آپدیت: 30 ثانیه</option>
+            <option value="120">آپدیت: 120 ثانیه</option>
+          </select>
+        </div>
+
+        <div class="search">
+          <input id="search" placeholder="جستجوی شهر..." />
+        </div>
+
+        <button class="btn ghost" id="manualRefresh">به‌روزرسانی</button>
+        <button class="btn" id="sortBtn">مرتب: AQI ↑</button>
       </div>
 
-      <div style="width:170px">
-        <select id="refreshSelect" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;font-size:14px">
-          <option value="60">آپدیت: 60 ثانیه</option>
-          <option value="30">آپدیت: 30 ثانیه</option>
-          <option value="120">آپدیت: 120 ثانیه</option>
-        </select>
-      </div>
-
-      <div class="search" style="min-width:140px">
-        <input type="text" id="citySearch" placeholder="جستجوی شهر..." />
-      </div>
-
-      <div style="min-width:120px">
-        <button class="btn ghost" id="toggleSort">مرتب‌سازی: AQI ↑</button>
-      </div>
-
-      <div style="min-width:140px;text-align:left">
-        <div class="small">میانگین کشوری: <span id="avgVal">—</span></div>
-        <div class="small">آخرین بروزرسانی: <span id="lastUpdated">—</span></div>
+      <div class="list card-container" id="listContainer">
+        <!-- کارت‌ها اینجا درج می‌شوند -->
       </div>
     </div>
 
-    <div class="table-wrap">
-      <table id="aqiTable" class="card">
-        <thead>
-          <tr>
-            <th>شهر</th>
-            <th>AQI</th>
-            <th>وضعیت</th>
-            <th>تغییر</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <!-- rows injected by JS -->
-        </tbody>
-      </table>
-    </div>
+    <aside class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:700">خلاصه کشور</div>
+        <div style="font-size:12px;color:var(--muted)">آخرین بروزرسانی: <span id="lastTime">—</span></div>
+      </div>
+
+      <div class="stat"><div class="label">میانگین آلودگی</div><div class="value" id="avg">—</div></div>
+      <div class="stat"><div class="label">شهرها</div><div class="value" id="cityCount">—</div></div>
+      <div style="height:8px"></div>
+      <div style="color:var(--muted);font-size:13px">داده‌ها از Open-Meteo (بدون توکن). می‌توانید سایت را اضافه کنید تا به صورت اپ نصب شود.</div>
+
+      <div style="height:12px"></div>
+      <button class="btn" id="openGithub">مشاهده در گیت‌هاب</button>
+    </aside>
   </div>
 </main>
 
-<footer>
-  ساخته شده با ❤️ — منبع داده: Open-Meteo (بدون توکن). قرار دادن در GitHub Pages امن است.
+<footer style="text-align:center;padding:10px 0;color:var(--muted);font-size:13px">
+  ساخته شده با ❤️ — (PWA ready)
 </footer>
 
 <script>
-/* =======================
-   لیست شهرها (فارسی) — می‌توانید اضافه/کم کنید
-   شکل: "نام": [lat, lon]
-   ======================= */
+/* ============================
+   داده‌ها و تنظیمات اولیه
+   ============================ */
 const cities = {
   "تهران":[35.6892,51.3890],
   "مشهد":[36.2605,59.6168],
@@ -153,174 +192,227 @@ const cities = {
   "شادگان":[30.5841,48.2716]
 };
 
-/* =========== تنظیمات اولیه =========== */
-let previous = {};         // ذخیره AQI قبلی برای اختلاف
-let refreshInterval = 60;  // ثانیه
-let sortAsc = true;        // مرتب‌سازی بر اساس AQI صعودی
-let updateTimer = null;
 const apiBase = "https://air-quality-api.open-meteo.com/v1/air-quality";
+let refreshSec = Number(document.getElementById('refresh').value) || 60;
+let timer = null;
+let sortAsc = true;
+let previous = {}; // ذخیره وضعیت قبلی
+const listContainer = document.getElementById('listContainer');
 
-/* ---------- helpers ---------- */
+/* ======== helpers ======== */
 function aqiEmoji(v){
-  if (v === null || v === undefined) return "❌";
-  if (v <= 50) return "🙂";
-  if (v <= 100) return "😐";
-  if (v <= 150) return "😷";
-  if (v <= 200) return "🤢";
-  if (v <= 300) return "☠️";
+  if (v===null || v===undefined) return "❌";
+  if (v<=50) return "🙂";
+  if (v<=100) return "😐";
+  if (v<=150) return "😷";
+  if (v<=200) return "🤢";
+  if (v<=300) return "☠️";
   return "💀";
 }
-function safeNum(x){ return (x===null||x===undefined) ? null : Number(x); }
+function aqiColor(v){
+  if (v===null) return "#999";
+  if (v<=50) return "#0f9d58";
+  if (v<=100) return "#f4b400";
+  if (v<=150) return "#ff8a00";
+  if (v<=200) return "#d32f2f";
+  if (v<=300) return "#7b1fa2";
+  return "#5d4037";
+}
 
-/* ---------- fetch AQI for coordinate ---------- */
+/* ======== fetch one ======== */
 async function fetchAQI(lat, lon){
   const url = `${apiBase}?latitude=${lat}&longitude=${lon}&hourly=us_aqi`;
   try{
     const res = await fetch(url);
     const j = await res.json();
-    // API returns hourly.us_aqi array; first element current hour
     return j?.hourly?.us_aqi?.[0] ?? null;
   }catch(e){
     return null;
   }
 }
 
-/* ---------- build & render table ---------- */
-async function updateAll(){
-  // stop any running timer while updating
-  if (updateTimer) { clearTimeout(updateTimer); updateTimer = null; }
+/* ======== render card ======== */
+function makeCard(name, aqi){
+  const card = document.createElement('div');
+  card.className = 'card';
 
-  const rows = [];
-  const keys = Object.keys(cities);
+  const left = document.createElement('div');
+  left.className = 'left';
 
-  // fetch sequentially to avoid floods; could be parallel but simpler and safer
-  for (const name of keys){
-    const [lat, lon] = cities[name];
-    const aqi = await fetchAQI(lat, lon);
-    rows.push({name, aqi: safeNum(aqi)});
+  const city = document.createElement('div');
+  city.className = 'city';
+  city.innerText = name;
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  meta.innerText = 'مختصات: ' + (cities[name] ? cities[name].join(', ') : '—');
+
+  left.appendChild(city);
+  left.appendChild(meta);
+
+  const box = document.createElement('div');
+  box.className = 'aqi';
+  const val = document.createElement('div');
+  val.className = 'val';
+  val.innerText = aqi===null ? 'نامعتبر' : aqi;
+  val.style.color = aqiColor(aqi);
+
+  const emoji = document.createElement('div');
+  emoji.className = 'emoji';
+  emoji.innerText = aqiEmoji(aqi);
+
+  const change = document.createElement('div');
+  change.className = 'change';
+  const prev = previous[name];
+  if (prev === undefined || prev === null) change.innerText = 'تغییر: 0';
+  else {
+    const d = (aqi===null || prev===null) ? 0 : (aqi - prev);
+    change.innerText = 'تغییر: ' + (d>0?'+':'') + d;
   }
 
-  // remove nulls for average calc
-  const valid = rows.filter(r=>r.aqi!==null).map(r=>r.aqi);
-  const avg = valid.length ? (valid.reduce((a,b)=>a+b,0)/valid.length).toFixed(1) : "—";
+  box.appendChild(val);
+  box.appendChild(emoji);
+  box.appendChild(change);
 
-  document.getElementById("avgVal").innerText = avg;
-  document.getElementById("lastUpdated").innerText = new Date().toLocaleTimeString('fa-IR');
+  card.appendChild(left);
+  card.appendChild(box);
 
-  // sorting
+  return card;
+}
+
+/* ======== main update flow ======== */
+async function updateAll(){
+  // stop timer
+  if (timer) { clearTimeout(timer); timer = null; }
+
+  // UI: loading placeholder
+  listContainer.innerHTML = '';
+  const loading = document.createElement('div');
+  loading.style.display='flex';loading.style.justifyContent='center';loading.style.padding='28px';
+  loading.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center"><div class="loader"></div><div style="margin-top:8px;color:var(--muted)">در حال بروزرسانی...</div></div>';
+  listContainer.appendChild(loading);
+
+  const rows = [];
+  for (const name of Object.keys(cities)){
+    const [lat, lon] = cities[name];
+    const aqi = await fetchAQI(lat, lon);
+    rows.push({name, aqi});
+    // small delay to be polite (avoid rapid-fire)
+    await new Promise(r=>setTimeout(r, 120));
+  }
+
+  // compute average
+  const vals = rows.filter(r=>r.aqi!==null).map(r=>r.aqi);
+  const avg = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '—';
+  document.getElementById('avg').innerText = avg;
+  document.getElementById('cityCount').innerText = rows.length;
+  document.getElementById('lastTime').innerText = new Date().toLocaleTimeString('fa-IR');
+
+  // sort
   rows.sort((a,b)=>{
     const aa = a.aqi===null?Infinity:a.aqi;
     const bb = b.aqi===null?Infinity:b.aqi;
     return sortAsc ? aa-bb : bb-aa;
   });
 
-  renderRows(rows);
-
-  // schedule next update
-  updateTimer = setTimeout(updateAll, refreshInterval*1000);
-}
-
-function renderRows(rows){
-  const tbody = document.getElementById("tableBody");
-  tbody.innerHTML = "";
-  const q = document.getElementById("citySearch").value.trim();
-  const qLower = q ? q.toLowerCase() : "";
-
+  // render cards
+  listContainer.innerHTML = '';
+  const q = document.getElementById('search').value.trim();
   for (const r of rows){
-    if (qLower && !r.name.toLowerCase().includes(qLower)) continue;
-
-    const change = (r.aqi===null) ? "" : (()=> {
-      const prev = previous[r.name];
-      if (prev===undefined || prev===null) return "0";
-      const d = r.aqi - prev;
-      return (d>0?"+":"") + d;
-    })();
-
-    // update previous only after calculating change
+    if (q && !r.name.includes(q) && !r.name.toLowerCase().includes(q.toLowerCase())) continue;
+    const card = makeCard(r.name, r.aqi);
+    listContainer.appendChild(card);
     previous[r.name] = r.aqi;
-
-    const tr = document.createElement("tr");
-
-    const tdName = document.createElement("td");
-    tdName.setAttribute("data-label","شهر");
-    tdName.innerText = r.name;
-
-    const tdAqi = document.createElement("td");
-    tdAqi.setAttribute("data-label","AQI");
-    tdAqi.innerText = r.aqi===null ? "نامعتبر" : r.aqi;
-
-    const tdEmoji = document.createElement("td");
-    tdEmoji.setAttribute("data-label","وضعیت");
-    tdEmoji.innerHTML = `<span class="emoji">${aqiEmoji(r.aqi)}</span>`;
-
-    const tdChange = document.createElement("td");
-    tdChange.setAttribute("data-label","تغییر");
-    tdChange.innerText = change;
-
-    tr.appendChild(tdName);
-    tr.appendChild(tdAqi);
-    tr.appendChild(tdEmoji);
-    tr.appendChild(tdChange);
-
-    tbody.appendChild(tr);
   }
+
+  // schedule next
+  timer = setTimeout(updateAll, refreshSec*1000);
+
+  // store last snapshot for offline
+  try { localStorage.setItem('aqi_snapshot', JSON.stringify({time:Date.now(), rows})); } catch(e){}
 }
 
-/* ========== UI bindings ========== */
-document.getElementById("citySearch").addEventListener("input", ()=> {
-  // re-render from last fetched data (we don't store full rows here, so simply call updateAll to refresh)
-  // but to avoid heavy API calls on typing, we can just re-render using previous values:
-  // build temporary rows from cities + previous
-  const tmp = Object.keys(cities).map(name=>({name, aqi: previous[name] ?? null}));
-  renderRows(tmp);
-});
-
-document.getElementById("toggleSort").addEventListener("click", (e)=>{
-  sortAsc = !sortAsc;
-  e.target.innerText = `مرتب‌سازی: AQI ${sortAsc ? '↑' : '↓'}`;
-  // re-render
-  const tmp = Object.keys(cities).map(name=>({name, aqi: previous[name] ?? null}));
-  renderRows(tmp);
-});
-
-document.getElementById("refreshSelect").addEventListener("change",(e)=>{
-  refreshInterval = Number(e.target.value);
-  if (updateTimer){ clearTimeout(updateTimer); updateTimer = null; }
+/* ======== UI events ======== */
+document.getElementById('refresh').addEventListener('change', (e)=>{
+  refreshSec = Number(e.target.value);
+  document.getElementById('uiInterval').innerText = refreshSec;
+  if (timer){ clearTimeout(timer); timer = null; }
   updateAll();
 });
 
-document.getElementById("showAll").addEventListener("click", ()=>{
-  document.getElementById("citySearch").value = "";
-  const tmp = Object.keys(cities).map(name=>({name, aqi: previous[name] ?? null}));
-  renderRows(tmp);
+document.getElementById('manualRefresh').addEventListener('click', ()=>{
+  if (timer){ clearTimeout(timer); timer = null; }
+  updateAll();
 });
 
-/* ========== PWA install prompt handling ========== */
+document.getElementById('sortBtn').addEventListener('click', (e)=>{
+  sortAsc = !sortAsc;
+  e.target.innerText = `مرتب: AQI ${sortAsc ? '↑' : '↓'}`;
+  // re-render from previous snapshot
+  const tmp = Object.keys(cities).map(name=>({name, aqi: previous[name] ?? null}));
+  tmp.sort((a,b)=> (sortAsc ? (a.aqi===null?Infinity:a.aqi) - (b.aqi===null?Infinity:b.aqi) : (b.aqi===null?Infinity:b.aqi) - (a.aqi===null?Infinity:a.aqi)));
+  listContainer.innerHTML = '';
+  const q = document.getElementById('search').value.trim();
+  for (const r of tmp) {
+    if (q && !r.name.includes(q) && !r.name.toLowerCase().includes(q.toLowerCase())) continue;
+    listContainer.appendChild(makeCard(r.name, r.aqi));
+  }
+});
+
+document.getElementById('search').addEventListener('input', ()=>{
+  // quick local filter
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const cards = listContainer.children;
+  for (let i=0;i<cards.length;i++){
+    const name = cards[i].querySelector('.city').innerText.toLowerCase();
+    cards[i].style.display = (q && !name.includes(q)) ? 'none' : 'flex';
+  }
+});
+
+document.getElementById('openGithub').addEventListener('click', ()=> {
+  window.open('https://github.com/amir11ma/Gankk', '_blank');
+});
+
+/* ===== PWA install prompt ===== */
 let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
+window.addEventListener('beforeinstallprompt', (e)=>{
   e.preventDefault();
   deferredPrompt = e;
-  document.getElementById("installRow").style.display = "flex";
+  document.getElementById('installRow').style.display = 'block';
 });
 
-document.getElementById("installBtn").addEventListener("click", async ()=>{
+document.getElementById('installBtn').addEventListener('click', async ()=>{
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
+  const choice = await deferredPrompt.userChoice;
   deferredPrompt = null;
-  document.getElementById("installRow").style.display = "none";
+  document.getElementById('installRow').style.display = 'none';
 });
 
-/* ========== service worker registration ========== */
-if ('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(()=> {
-    console.log('Service worker registered');
-  }).catch(()=>console.warn('SW register failed'));
+/* ===== service worker register ===== */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(()=>console.log('sw registered')).catch(()=>console.warn('sw failed'));
 }
 
-/* ========== start ========== */
-updateAll();
-
+/* ===== on load: try load snapshot if offline, then update ===== */
+window.addEventListener('load', ()=>{
+  // try local snapshot
+  try {
+    const snap = JSON.parse(localStorage.getItem('aqi_snapshot')||'null');
+    if (snap && snap.rows){
+      // show cached fast UI
+      document.getElementById('avg').innerText = (snap.rows.filter(r=>r.aqi!==null).map(r=>r.aqi).reduce((a,b)=>a+b,0)/snap.rows.filter(r=>r.aqi!==null).length).toFixed(1);
+      document.getElementById('cityCount').innerText = snap.rows.length;
+      document.getElementById('lastTime').innerText = new Date(snap.time).toLocaleTimeString('fa-IR');
+      listContainer.innerHTML = '';
+      for (const r of snap.rows){
+        listContainer.appendChild(makeCard(r.name, r.aqi));
+        previous[r.name] = r.aqi;
+      }
+    }
+  } catch(e){}
+  updateAll();
+});
 </script>
 </body>
 </html>
